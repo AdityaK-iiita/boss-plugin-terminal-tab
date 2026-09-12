@@ -60,6 +60,7 @@ internal fun TabbedTerminalContentImpl(
     val settings by SettingsManager.instance.settings.collectAsState()
     val scope = rememberCoroutineScope()
     val windowId = LocalWindowIdProvider.current?.getWindowId() ?: return
+    val isPanelActive = LocalIsPanelActive.current
 
     val resetGeneration by TabbedTerminalStateRegistry.resetGeneration.collectAsState()
     val isNew = !TabbedTerminalStateRegistry.contains(windowId, SIDEBAR_TERMINAL_ID)
@@ -123,6 +124,7 @@ internal fun TabbedTerminalContentImpl(
             KeyboardShortcutInterceptorWrapper(windowId = windowId) {
               CompositionLocalProvider(LocalBossTermMcpConfig provides TerminalMcpConfigHolder.config) {
                 TabbedTerminal(
+                    isActive = isPanelActive,
                     state = state,
                     initialCommand = normalizedPendingCommand,
                     workingDirectory = effectiveWorkingDir,
@@ -196,6 +198,15 @@ internal fun PersistentTabbedTerminalContentImpl(
 
     val isNew = !TabbedTerminalStateRegistry.contains(windowId, terminalId)
     val state = remember(terminalId, resetGeneration) { TabbedTerminalStateRegistry.getOrCreate(windowId, terminalId) }
+
+    LaunchedEffect(windowId, terminalId, resetGeneration) {
+        TabbedTerminalStateRegistry.observeCommandCompletions(
+            windowId = windowId,
+            terminalId = terminalId,
+            scope = scope,
+        )
+    }
+
     val effectiveWorkingDir = if (isNew) workingDirectory else null
 
     var showWelcomeWizard by remember { mutableStateOf(false) }
