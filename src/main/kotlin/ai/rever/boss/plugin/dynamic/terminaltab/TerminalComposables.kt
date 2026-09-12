@@ -199,14 +199,6 @@ internal fun PersistentTabbedTerminalContentImpl(
     val isNew = !TabbedTerminalStateRegistry.contains(windowId, terminalId)
     val state = remember(terminalId, resetGeneration) { TabbedTerminalStateRegistry.getOrCreate(windowId, terminalId) }
 
-    LaunchedEffect(windowId, terminalId, resetGeneration) {
-        TabbedTerminalStateRegistry.observeCommandCompletions(
-            windowId = windowId,
-            terminalId = terminalId,
-            scope = scope,
-        )
-    }
-
     val effectiveWorkingDir = if (isNew) workingDirectory else null
 
     var showWelcomeWizard by remember { mutableStateOf(false) }
